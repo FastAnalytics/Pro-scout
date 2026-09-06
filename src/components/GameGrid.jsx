@@ -19,8 +19,8 @@ export default function GameGrid({ games, loading, devex, onSelect }) {
   if (!games?.length) {
     return (
       <div className="text-center py-16 text-slate-400 border border-dashed border-slate-800 rounded-xl">
-        <div className="text-lg text-slate-200 font-medium mb-1">Discovering games…</div>
-        <div className="text-sm">First discovery pass is running in the background. Results appear as they’re found — refresh in ~1–2 minutes, or widen your filters.</div>
+        <div className="text-lg text-slate-200 font-medium mb-1">No games match these filters</div>
+        <div className="text-sm">Try widening the CCU or visits range, clearing the search, or resetting the filters.</div>
       </div>
     );
   }

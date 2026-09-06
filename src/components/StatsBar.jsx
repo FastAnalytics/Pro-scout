@@ -18,16 +18,9 @@ function Stat({ icon: Icon, label, value }) {
 
 export default function StatsBar({ stats }) {
   const s = stats || {};
-  // Present a marketing-friendly rounded number ("10k+ games tracked") so the
-  // homepage never looks empty. Real value from the API is still shown below in
-  // filter results count.
-  const inflate = (n) => {
-    const v = Math.max(Number(n || 0), 10000);
-    return formatNumber(v) + "+";
-  };
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <Stat icon={Database} label="Games Tracked" value={inflate(s.totalGames)} />
+      <Stat icon={Database} label="Games Tracked" value={formatNumber(s.totalGames)} />
       <Stat icon={Flame} label="High-CCU Games" value={formatNumber(s.highCCU)} />
       <Stat icon={Gem} label="Hidden Gems" value={formatNumber(s.hiddenGems)} />
       <Stat icon={LineChart} label="Avg CCU" value={formatNumber(s.avgCCU)} />
