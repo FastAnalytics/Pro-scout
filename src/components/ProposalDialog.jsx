@@ -90,7 +90,7 @@ export default function ProposalDialog({ game, onClose, devex }) {
                     <Sparkles className="text-orange-400" size={18} /> {game.name}
                   </DialogTitle>
                   <DialogDescription className="text-slate-400 mt-1">
-                    Pain Interactive outreach DM — by {game.creatorName || "Unknown"} · {game.genre || "No genre"}
+                    Creator outreach DM — by {game.creatorName || "Unknown"} · {game.genre || "No genre"}
                   </DialogDescription>
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     <MiniStat icon={Users} label="CCU" value={formatNumber(game.playing)} tone="orange" />

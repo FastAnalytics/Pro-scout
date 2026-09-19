@@ -80,7 +80,7 @@ export default function Dashboard() {
       <main className="max-w-[1400px] mx-auto px-6 pt-8 pb-24 relative z-10">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-            Roblox <span className="text-orange-400">Opportunity</span> Scout
+            Roblox <span className="text-orange-400">Game</span> Explorer
           </h1>
           <p className="mt-2 text-slate-400 max-w-2xl">
             Surface under-served Roblox games with unusually high CCU-to-visits ratios. Every game shown here has under 5M lifetime visits — the sweet spot for a clone or spiritual successor.

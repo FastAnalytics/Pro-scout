@@ -31,8 +31,8 @@ export default function SidebarLayout() {
     <div className="flex min-h-screen bg-black">
       <aside className="hidden md:flex flex-col w-64 border-r border-slate-900 bg-black shrink-0">
         <div className="h-16 px-4 flex items-center gap-2 border-b border-slate-900">
-          <img src={LOGO_URL} alt="Pain Interactive" className="w-9 h-9 rounded-md object-cover" />
-          <div className="leading-tight"><div className="text-white text-sm font-semibold">Pain Interactive</div><div className="text-[10px] text-slate-500">v2.5 · Scout</div></div>
+          <img src={LOGO_URL} alt="Game Explorer" className="w-9 h-9 rounded-md object-cover" />
+          <div className="leading-tight"><div className="text-white text-sm font-semibold">Game Explorer</div><div className="text-[10px] text-slate-500">v2.5 · Scout</div></div>
         </div>
         <nav className="flex-1 py-2 overflow-y-auto scroll-thin">
           <NavSection title="Scout">
@@ -53,7 +53,7 @@ export default function SidebarLayout() {
         </nav>
         <div className="p-4 border-t border-slate-900 text-[11px] text-slate-500 space-y-1">
           <div>Data via Roblox public API</div>
-          <div className="text-slate-600">© pain interactive 2026</div>
+          <div className="text-slate-600">© Roblox Game Explorer 2026</div>
         </div>
       </aside>
 
@@ -61,8 +61,8 @@ export default function SidebarLayout() {
         <header className="sticky top-0 z-30 h-16 border-b border-slate-900 bg-black/90 backdrop-blur">
           <div className="h-full px-6 flex items-center justify-between">
             <Link to="/" className="md:hidden flex items-center gap-2">
-              <img src={LOGO_URL} alt="Pain Interactive" className="w-7 h-7 rounded-md" />
-              <span className="text-white font-semibold">Pain Interactive</span>
+              <img src={LOGO_URL} alt="Game Explorer" className="w-7 h-7 rounded-md" />
+              <span className="text-white font-semibold">Game Explorer</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm text-slate-400">
               <Link to="/faq" className="px-3 py-2 hover:text-orange-400">FAQ</Link>
