@@ -4,8 +4,9 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_P
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const DATA_URL = "/data/games.json";
 const HISTORY_URL = "/data/history.json";
+const ROLIMONS_URL = "/api/rolimons";
 export const SOURCES = [
-  { id: "rolimons", label: "Rolimon's game list", url: "https://api.rolimons.com/games/v1/gamelist" },
+  { id: "rolimons", label: "Rolimon's game list", url: ROLIMONS_URL },
   { id: "roblox", label: "Roblox public Games API", url: "https://games.roblox.com/v1/games" },
 ];
 export const DISCOVERY_KEYWORDS = ["obby", "simulator", "sim", "tower", "tycoon", "cash grab", "survival", "horror", "roleplay", "anime", "clicker", "idle", "murder", "escape", "pvp", "battle", "racing", "adventure", "story", "defense", "fighting", "fps", "rpg", "pets", "farm", "build", "parkour", "prison", "zombie", "dungeon", "boxing", "football", "fashion", "restaurant", "school", "city", "bedwars", "battlegrounds", "rng", "collect", "merge", "doors", "challenge", "meme", "arcade"];
@@ -30,11 +31,23 @@ async function loadSupabaseRows(path, select, order, pageSize = 1000) {
   }
 }
 function normalizeGame(game) { return { ...game, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) }; }
+function normalizeRolimons(payload) {
+  const entries = Object.entries(payload?.games || payload || {});
+  return entries.map(([universeId, value]) => {
+    const [name, rootPlaceId, playing, visits, favorites, created, updated, genre] = Array.isArray(value) ? value : [];
+    return normalizeGame({ universeId, name: name || `Roblox game ${universeId}`, rootPlaceId, playing: Number(playing) || 0, visits: Number(visits) || 0, favorites: Number(favorites) || 0, created, updated, genre });
+  }).filter((game) => game.universeId && game.visits > 0);
+}
+async function loadRemoteGames() {
+  const response = await fetch(ROLIMONS_URL, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error(`Rolimon's returned ${response.status}`);
+  return normalizeRolimons(await response.json());
+}
 async function loadGames() {
   if (gamesPromise) return gamesPromise;
-  gamesPromise = SUPABASE_URL && SUPABASE_KEY
-    ? loadSupabaseRows("games", "*", "playing.desc").catch(() => loadJson(DATA_URL)).then((games) => games.map(normalizeGame))
-    : loadJson(DATA_URL).then((games) => games.map(normalizeGame));
+  gamesPromise = loadRemoteGames()
+    .catch(() => SUPABASE_URL && SUPABASE_KEY ? loadSupabaseRows("games", "*", "playing.desc") : loadJson(DATA_URL))
+    .then((games) => games.map(normalizeGame));
   return gamesPromise;
 }
 async function loadHistory() {
