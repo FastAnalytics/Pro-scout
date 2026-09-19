@@ -1,5 +1,7 @@
 import { buildProposal } from "./proposal";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const DATA_URL = "/data/games.json";
 const HISTORY_URL = "/data/history.json";
 export const SOURCES = [
@@ -8,11 +10,25 @@ export const SOURCES = [
 ];
 export const DISCOVERY_KEYWORDS = ["obby", "simulator", "sim", "tower", "tycoon", "cash grab", "survival", "horror", "roleplay", "anime", "clicker", "idle", "murder", "escape", "pvp", "battle", "racing", "adventure", "story", "defense", "fighting", "fps", "rpg", "pets", "farm", "build", "parkour", "prison", "zombie", "dungeon", "boxing", "football", "fashion", "restaurant", "school", "city", "bedwars", "battlegrounds", "rng", "collect", "merge", "doors", "challenge", "meme", "arcade"];
 export const DEVEX = { usdPerRobux: 0.0035, robuxPerUsd: 1 / 0.0035, minimumRobux: 30000, minimumUsd: 105, note: "Roblox DevEx: 100,000 Robux = $350 USD." };
+
 let gamesPromise = null;
 let historyPromise = null;
-async function loadJson(url) { const res = await fetch(url); if (!res.ok) throw new Error(`${res.status} ${res.statusText}`); return res.json(); }
-function loadGames() { if (!gamesPromise) gamesPromise = loadJson(DATA_URL); return gamesPromise; }
-function loadHistory() { if (!historyPromise) historyPromise = loadJson(HISTORY_URL); return historyPromise; }
+async function loadJson(url, options) { const res = await fetch(url, options); if (!res.ok) throw new Error(`${res.status} ${res.statusText}`); return res.json(); }
+function normalizeGame(game) { return { ...game, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) }; }
+async function loadGames() {
+  if (gamesPromise) return gamesPromise;
+  gamesPromise = SUPABASE_URL && SUPABASE_KEY
+    ? loadJson(`${SUPABASE_URL}/rest/v1/games?select=*&order=playing.desc&limit=100000`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).catch(() => loadJson(DATA_URL)).then((games) => games.map(normalizeGame))
+    : loadJson(DATA_URL).then((games) => games.map(normalizeGame));
+  return gamesPromise;
+}
+async function loadHistory() {
+  if (historyPromise) return historyPromise;
+  historyPromise = SUPABASE_URL && SUPABASE_KEY
+    ? loadJson(`${SUPABASE_URL}/rest/v1/game_snapshots?select=universe_id,playing,captured_at&order=captured_at.asc&limit=100000`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).then((rows) => rows.reduce((acc, row) => { (acc[row.universe_id] ||= []).push([row.captured_at, row.playing]); return acc; }, {})).catch(() => loadJson(HISTORY_URL))
+    : loadJson(HISTORY_URL);
+  return historyPromise;
+}
 const SORTERS = { ratio: (g) => g.ratio || 0, playing: (g) => g.playing || 0, visits: (g) => g.visits || 0, favorites: (g) => g.favorites || 0, newest: (g) => new Date(g.created || 0).getTime() };
 function applyFilters(games, params) { const q = String(params.q || "").trim().toLowerCase(); const minCCU = Number(params.minCCU || 0), maxCCU = Number(params.maxCCU || 0), minVisits = Number(params.minVisits || 0), maxVisits = Number(params.maxVisits || 0); return games.filter((g) => { const haystack = `${g.name || ""} ${g.description || ""}`.toLowerCase(); if (q && !haystack.includes(q)) return false; if (minCCU && (g.playing || 0) < minCCU) return false; if (maxCCU && (g.playing || 0) > maxCCU) return false; if (minVisits && (g.visits || 0) < minVisits) return false; if (maxVisits && (g.visits || 0) > maxVisits) return false; if (params.genre && g.genre !== params.genre) return false; return !params.hasDiscord || !!g.discord; }); }
 export const api = {
