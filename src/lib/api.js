@@ -14,18 +14,33 @@ export const DEVEX = { usdPerRobux: 0.0035, robuxPerUsd: 1 / 0.0035, minimumRobu
 let gamesPromise = null;
 let historyPromise = null;
 async function loadJson(url, options) { const res = await fetch(url, options); if (!res.ok) throw new Error(`${res.status} ${res.statusText}`); return res.json(); }
+async function loadSupabaseRows(path, select, order, pageSize = 1000) {
+  const rows = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await loadJson(`${SUPABASE_URL}/rest/v1/${path}?select=${select}&order=${order}`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Range: `${offset}-${offset + pageSize - 1}`,
+        Prefer: "count=exact",
+      },
+    });
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
+  }
+}
 function normalizeGame(game) { return { ...game, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) }; }
 async function loadGames() {
   if (gamesPromise) return gamesPromise;
   gamesPromise = SUPABASE_URL && SUPABASE_KEY
-    ? loadJson(`${SUPABASE_URL}/rest/v1/games?select=*&order=playing.desc&limit=100000`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).catch(() => loadJson(DATA_URL)).then((games) => games.map(normalizeGame))
+    ? loadSupabaseRows("games", "*", "playing.desc").catch(() => loadJson(DATA_URL)).then((games) => games.map(normalizeGame))
     : loadJson(DATA_URL).then((games) => games.map(normalizeGame));
   return gamesPromise;
 }
 async function loadHistory() {
   if (historyPromise) return historyPromise;
   historyPromise = SUPABASE_URL && SUPABASE_KEY
-    ? loadJson(`${SUPABASE_URL}/rest/v1/game_snapshots?select=universe_id,playing,captured_at&order=captured_at.asc&limit=100000`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).then((rows) => rows.reduce((acc, row) => { (acc[row.universe_id] ||= []).push([row.captured_at, row.playing]); return acc; }, {})).catch(() => loadJson(HISTORY_URL))
+    ? loadSupabaseRows("game_snapshots", "universe_id,playing,captured_at", "captured_at.asc").then((rows) => rows.reduce((acc, row) => { (acc[row.universe_id] ||= []).push([row.captured_at, row.playing]); return acc; }, {})).catch(() => loadJson(HISTORY_URL))
     : loadJson(HISTORY_URL);
   return historyPromise;
 }
