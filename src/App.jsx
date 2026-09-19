@@ -9,7 +9,7 @@ import SidebarLayout from "./components/SidebarLayout";
 import { Toaster } from "./components/ui/toaster";
 
 function App() {
-  useEffect(() => { document.title = "Pain Scout Pro — Roblox Opportunity Finder"; }, []);
+  useEffect(() => { document.title = "Roblox Game Explorer"; }, []);
   return (
     <div className="App min-h-screen bg-black text-slate-100">
       <BrowserRouter>

@@ -53,7 +53,7 @@ export function buildProposal(game, focus = "acquisition") {
   const closer = CLOSERS[focus] || CLOSERS.acquisition;
 
   return [
-    `hey, i'm a scout from pain interactive — wanted to reach out about ${game.name}.`,
+    `hey, i'm a scout from Roblox Game Explorer — wanted to reach out about ${game.name}.`,
     pick(OPENERS, seed)(ccu, visits),
     pick(ASKS, seed),
     pick(INVITES, seed),
