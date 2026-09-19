@@ -22,4 +22,13 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      "/api/rolimons": {
+        target: "https://api.rolimons.com",
+        changeOrigin: true,
+        rewrite: () => "/games/v1/gamelist",
+      },
+    },
+  },
 });
