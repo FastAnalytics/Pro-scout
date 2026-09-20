@@ -34,7 +34,7 @@ async function loadSupabaseRows(path, select, order, pageSize = 1000) {
 function normalizeGame(game) {
   const thumbnailId = typeof game.thumbnail === "number" || /^\d+$/.test(String(game.thumbnail || "")) ? String(game.thumbnail) : "";
   const icon = game.icon || (typeof game.thumbnail === "string" && game.thumbnail.startsWith("http") ? game.thumbnail : (thumbnailId ? `https://tr.rbxcdn.com/${thumbnailId}/420/420/Image/Png` : ""));
-  return { ...game, icon, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) };
+  return { ...game, icon, thumbnail: game.thumbnail || icon, likes: Number(game.likes) || 0, dislikes: Number(game.dislikes) || 0, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) };
 }
 async function enrichRobloxGames(games) {
   const enriched = games.map(normalizeGame);
@@ -95,9 +95,34 @@ async function loadRemoteGames() {
 }
 async function loadGames() {
   if (gamesPromise) return gamesPromise;
-  // The catalog is intentionally a shipped asset so Cloudflare can serve the
-  // same complete dataset without relying on Supabase or a server runtime.
-  gamesPromise = loadJson(DATA_URL).then((games) => games.map(normalizeGame));
+  gamesPromise = (SUPABASE_URL && SUPABASE_KEY
+    ? loadSupabaseRows(
+      "games",
+      "universe_id,root_place_id,name,description,creator_id,creator_name,creator_type,genre,max_players,created_at,updated_at,playing,visits,favorites,likes,dislikes,icon_url,is_active,last_refreshed_at",
+      "visits.desc",
+      1000,
+    ).then((rows) => rows.filter((row) => row.is_active !== false).map((row) => normalizeGame({
+      universeId: row.universe_id,
+      rootPlaceId: row.root_place_id,
+      name: row.name,
+      description: row.description,
+      creatorId: row.creator_id,
+      creatorName: row.creator_name,
+      creatorType: row.creator_type,
+      genre: row.genre,
+      maxPlayers: row.max_players,
+      created: row.created_at,
+      updated: row.updated_at,
+      playing: Number(row.playing) || 0,
+      visits: Number(row.visits) || 0,
+      favorites: Number(row.favorites) || 0,
+      likes: Number(row.likes) || 0,
+      dislikes: Number(row.dislikes) || 0,
+      icon: row.icon_url || "",
+      lastRefreshedAt: row.last_refreshed_at,
+    })))
+    : Promise.reject(new Error("Supabase catalog is not configured")))
+    .catch(() => loadJson(DATA_URL).then((games) => games.map(normalizeGame)));
   return gamesPromise;
 }
 async function loadHistory() {
