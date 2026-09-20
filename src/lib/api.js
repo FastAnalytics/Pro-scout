@@ -19,11 +19,11 @@ async function loadJson(url, options) { const res = await fetch(url, options); i
 async function loadSupabaseRows(path, select, order, pageSize = 1000) {
   const rows = [];
   for (let offset = 0; ; offset += pageSize) {
-    const page = await loadJson(`${SUPABASE_URL}/rest/v1/${path}?select=${select}&order=${order}`, {
+    const params = new URLSearchParams({ select, order, offset: String(offset), limit: String(pageSize) });
+    const page = await loadJson(`${SUPABASE_URL}/rest/v1/${path}?${params}`, {
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`,
-        Range: `${offset}-${offset + pageSize - 1}`,
         Prefer: "count=exact",
       },
     });
@@ -31,7 +31,44 @@ async function loadSupabaseRows(path, select, order, pageSize = 1000) {
     if (page.length < pageSize) return rows;
   }
 }
-function normalizeGame(game) { return { ...game, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) }; }
+function normalizeGame(game) {
+  const thumbnailId = typeof game.thumbnail === "number" || /^\d+$/.test(String(game.thumbnail || "")) ? String(game.thumbnail) : "";
+  const icon = game.icon || (typeof game.thumbnail === "string" && game.thumbnail.startsWith("http") ? game.thumbnail : (thumbnailId ? `https://tr.rbxcdn.com/${thumbnailId}/420/420/Image/Png` : ""));
+  return { ...game, icon, ratio: game.ratio ?? (game.visits ? (game.playing || 0) / game.visits : 0) };
+}
+async function enrichRobloxGames(games) {
+  const enriched = games.map(normalizeGame);
+  for (let offset = 0; offset < enriched.length; offset += 50) {
+    const batch = enriched.slice(offset, offset + 50);
+    const ids = batch.map((game) => game.universeId).filter(Boolean).join(",");
+    if (!ids) continue;
+    try {
+      const [details, thumbnails] = await Promise.all([
+        loadJson(`/api/roblox?universeIds=${ids}`),
+      ]);
+      const byId = new Map((details.games?.data || []).map((game) => [String(game.id), game]));
+      const imageById = new Map((details.thumbnails?.data || []).map((image) => [String(image.targetId), image.imageUrl]));
+      batch.forEach((game) => {
+        const detail = byId.get(String(game.universeId));
+        if (detail && Number(detail.id) > 0) Object.assign(game, {
+          name: detail.name || game.name,
+          description: detail.description || game.description,
+          rootPlaceId: detail.rootPlaceId || game.rootPlaceId,
+          playing: Number(detail.playing ?? game.playing) || game.playing || 0,
+          visits: Number(detail.visits ?? game.visits) || game.visits || 0,
+          favorites: Number(detail.favoritedCount ?? game.favorites) || game.favorites || 0,
+          creatorName: detail.creator?.name || game.creatorName,
+          maxPlayers: detail.maxPlayers || game.maxPlayers,
+        });
+        game.icon = imageById.get(String(game.universeId)) || game.icon;
+        game.ratio = game.visits ? (game.playing || 0) / game.visits : 0;
+      });
+    } catch (error) {
+      // Keep the Rolimon's record when Roblox enrichment is unavailable.
+    }
+  }
+  return enriched;
+}
 function normalizeRolimons(payload) {
   const entries = Object.entries(payload?.games || payload || {});
   return entries.map(([universeId, value]) => {
@@ -48,7 +85,7 @@ async function loadRemoteGames() {
       const contentType = response.headers.get("content-type") || "";
       if (!response.ok || !contentType.includes("json")) throw new Error(`Rolimon's returned ${response.status}`);
       const games = normalizeRolimons(await response.json());
-      if (games.length) return games;
+      if (games.length) return enrichRobloxGames(games);
       throw new Error("Rolimon's returned no games");
     } catch (error) {
       lastError = error;
