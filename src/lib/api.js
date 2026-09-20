@@ -95,34 +95,41 @@ async function loadRemoteGames() {
 }
 async function loadGames() {
   if (gamesPromise) return gamesPromise;
-  gamesPromise = (SUPABASE_URL && SUPABASE_KEY
-    ? loadSupabaseRows(
-      "games",
-      "universe_id,root_place_id,name,description,creator_id,creator_name,creator_type,genre,max_players,created_at,updated_at,playing,visits,favorites,likes,dislikes,icon_url,is_active,last_refreshed_at",
-      "visits.desc",
-      1000,
-    ).then((rows) => rows.filter((row) => row.is_active !== false).map((row) => normalizeGame({
-      universeId: row.universe_id,
-      rootPlaceId: row.root_place_id,
-      name: row.name,
-      description: row.description,
-      creatorId: row.creator_id,
-      creatorName: row.creator_name,
-      creatorType: row.creator_type,
-      genre: row.genre,
-      maxPlayers: row.max_players,
-      created: row.created_at,
-      updated: row.updated_at,
-      playing: Number(row.playing) || 0,
-      visits: Number(row.visits) || 0,
-      favorites: Number(row.favorites) || 0,
-      likes: Number(row.likes) || 0,
-      dislikes: Number(row.dislikes) || 0,
-      icon: row.icon_url || "",
-      lastRefreshedAt: row.last_refreshed_at,
-    })))
-    : Promise.reject(new Error("Supabase catalog is not configured")))
-    .catch(() => loadJson(DATA_URL).then((games) => games.map(normalizeGame)));
+
+  // The catalog is intentionally a checked-in static asset so Cloudflare Pages can
+  // serve the complete game index without depending on Supabase at runtime.
+  gamesPromise = loadJson(DATA_URL)
+    .then((games) => enrichRobloxGames(games.map(normalizeGame)))
+    .catch(() => {
+      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Static game catalog is unavailable");
+      return loadSupabaseRows(
+        "games",
+        "universe_id,root_place_id,name,description,creator_id,creator_name,creator_type,genre,max_players,created_at,updated_at,playing,visits,favorites,likes,dislikes,icon_url,is_active,last_refreshed_at",
+        "visits.desc",
+        1000,
+      ).then((rows) => rows
+        .filter((row) => row.is_active !== false)
+        .map((row) => normalizeGame({
+          universeId: row.universe_id,
+          rootPlaceId: row.root_place_id,
+          name: row.name,
+          description: row.description,
+          creatorId: row.creator_id,
+          creatorName: row.creator_name,
+          creatorType: row.creator_type,
+          genre: row.genre,
+          maxPlayers: row.max_players,
+          created: row.created_at,
+          updated: row.updated_at,
+          playing: Number(row.playing) || 0,
+          visits: Number(row.visits) || 0,
+          favorites: Number(row.favorites) || 0,
+          likes: Number(row.likes) || 0,
+          dislikes: Number(row.dislikes) || 0,
+          icon: row.icon_url || "",
+          lastRefreshedAt: row.last_refreshed_at,
+        })));
+    });
   return gamesPromise;
 }
 async function loadHistory() {
