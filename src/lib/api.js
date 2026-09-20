@@ -95,9 +95,9 @@ async function loadRemoteGames() {
 }
 async function loadGames() {
   if (gamesPromise) return gamesPromise;
-  gamesPromise = loadRemoteGames()
-    .catch(() => SUPABASE_URL && SUPABASE_KEY ? loadSupabaseRows("games", "*", "playing.desc") : loadJson(DATA_URL))
-    .then((games) => games.map(normalizeGame));
+  // The catalog is intentionally a shipped asset so Cloudflare can serve the
+  // same complete dataset without relying on Supabase or a server runtime.
+  gamesPromise = loadJson(DATA_URL).then((games) => games.map(normalizeGame));
   return gamesPromise;
 }
 async function loadHistory() {
