@@ -8,10 +8,10 @@ import { useToast } from "../hooks/use-toast";
 
 const DEFAULT_FILTERS = {
   q: "",
-  minCCU: 100,
+  minCCU: 0,
   maxCCU: 0,
   minVisits: 0,
-  maxVisits: 5000000,
+  maxVisits: 0,
   genre: "",
   hasDiscord: false,
   sort: "ratio",
@@ -83,7 +83,7 @@ export default function Dashboard() {
             Roblox <span className="text-orange-400">Game</span> Explorer
           </h1>
           <p className="mt-2 text-slate-400 max-w-2xl">
-            Surface under-served Roblox games with unusually high CCU-to-visits ratios. Every game shown here has under 5M lifetime visits — the sweet spot for a clone or spiritual successor.
+            Browse the complete live Rolimon&apos;s catalog and use the filters to find games by CCU, visits, genre, and discovery keywords.
           </p>
         </div>
 
