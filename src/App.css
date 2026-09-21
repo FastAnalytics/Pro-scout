@@ -1,0 +1,50 @@
+.App {
+  min-height: 100vh;
+}
+
+/* subtle grain overlay for depth */
+.grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  z-index: 1;
+}
+
+.card-hover {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -12px rgba(249,115,22,0.25);
+  border-color: rgba(249,115,22,0.4);
+}
+
+.ring-glow {
+  box-shadow: 0 0 0 1px rgba(249,115,22,0.35), 0 8px 24px -8px rgba(249,115,22,0.35);
+}
+
+.scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #2a2f36; border-radius: 8px; }
+.scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.live-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+/* markdown proposal */
+.prose-invert h1, .prose-invert h2, .prose-invert h3 {
+  color: #f8fafc; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem;
+}
+.prose-invert h2 { font-size: 1.1rem; }
+.prose-invert h3 { font-size: 1rem; }
+.prose-invert p { color: #cbd5e1; line-height: 1.65; margin-bottom: 0.65rem; }
+.prose-invert ul { list-style: disc; padding-left: 1.25rem; color: #cbd5e1; }
+.prose-invert ol { list-style: decimal; padding-left: 1.25rem; color: #cbd5e1; }
+.prose-invert li { margin-bottom: 0.25rem; }
+.prose-invert strong { color: #fdba74; }
+.prose-invert code { background: #1f2328; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
